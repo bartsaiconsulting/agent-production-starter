@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bartsai-agent-starter"
+version = "0.1.0"
+description = "BartsAI Production Evaluation & Hard Guardrails Starter Kit for AI Agents"
+readme = "README.md"
+authors = [{ name = "BartsAI Engineering", email = "engineering@bartsaiconsulting.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "deepeval>=2.0.0",
+    "pydantic>=2.6.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "jsonschema>=4.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --tb=short"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

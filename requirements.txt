@@ -1,0 +1,9 @@
+# BartsAI Production Evaluation & Hard Guardrails Starter
+# Pinned dependencies for local testing & CI verification
+
+deepeval==2.5.0
+pydantic==2.8.2
+pytest==8.3.2
+pytest-asyncio==0.23.8
+jsonschema==4.23.0
+typing-extensions>=4.12.0
