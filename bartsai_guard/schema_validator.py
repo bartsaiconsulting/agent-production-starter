@@ -37,16 +37,14 @@ class SchemaValidator:
         Raises SchemaValidationError on mismatch.
         """
         if not HAS_JSONSCHEMA:
-            # Fallback basic checks if jsonschema package is not yet installed
-            required = schema.get("required", [])
-            for field in required:
-                if field not in payload:
-                    raise SchemaValidationError(f"Missing required property: '{field}'")
-            return
+            raise SchemaValidationError(
+                "Strict JSON Schema validation requires jsonschema. "
+                "Install the core dependencies with `pip install -r requirements-core.txt`."
+            )
 
         try:
             jsonschema.validate(instance=payload, schema=schema)
-        except jsonschema.exceptions.ValidationError as e:
+        except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
             raise SchemaValidationError(
                 f"JSON Schema validation failed at path '{list(e.path)}': {e.message}"
             ) from e
@@ -59,7 +57,7 @@ class SchemaValidator:
         """
         if not HAS_PYDANTIC:
             raise SchemaValidationError(
-                "Pydantic is not installed. Install requirements via `pip install -r requirements.txt`"
+                "Pydantic is not installed. Install requirements via `pip install -r requirements-core.txt`"
             )
 
         try:

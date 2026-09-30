@@ -30,13 +30,13 @@ jobs:
       - name: Install Pinned Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-core.txt
 
       - name: Run Deterministic Safety & Trajectory Test Suite
         env:
           DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
         run: |
-          python -m pytest tests/ -v --tb=short
+          python run_tests.py --full
 
       - name: Run End-to-End Guardrail Demo Verification
         run: |

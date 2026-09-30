@@ -77,18 +77,16 @@ def test_json_schema_missing_required_field():
     assert "Missing required property" in str(exc_info.value) or "is a required property" in str(exc_info.value)
 
 
-def test_json_schema_additional_properties_rejected():
-    """Hallucinated unexpected arguments are rejected when jsonschema is present."""
-    payload = {
-        "customer_id": 42,
-        "status": "active",
-        "drop_tables": True,  # Unexpected hallucinatory parameter
-    }
-
-    try:
-        SchemaValidator.validate_json_schema(payload, CUSTOMER_UPDATE_SCHEMA)
-    except SchemaValidationError as e:
-        assert "drop_tables" in str(e)
+def test_json_schema_negative_cases():
+    """Strict mode rejects every unsupported shape, not just missing fields."""
+    cases = [
+        {"customer_id": "42", "status": "active"},
+        {"customer_id": 42, "status": "paused"},
+        {"customer_id": 42, "status": "active", "drop_tables": True},
+    ]
+    for payload in cases:
+        with pytest.raises(SchemaValidationError):
+            SchemaValidator.validate_json_schema(payload, CUSTOMER_UPDATE_SCHEMA)
 
 
 def test_pydantic_validation_success():
@@ -146,7 +144,7 @@ def test_empty_where_clause_intercepted():
 if __name__ == "__main__":
     test_json_schema_valid_payload()
     test_json_schema_missing_required_field()
-    test_json_schema_additional_properties_rejected()
+    test_json_schema_negative_cases()
     test_pydantic_validation_success()
     test_pydantic_validation_bounds_failure()
     test_empty_where_clause_intercepted()

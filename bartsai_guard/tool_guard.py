@@ -1,6 +1,6 @@
 """
-Tool Guard Module: Least-Privilege Scoping, Path Traversal Defense, and Approval Gates.
-Enforces physical tool permissions, filesystem boundaries, and human sign-off.
+Tool Guard Module: Tool allowlists, recognized path argument checks, and approval gates.
+These checks do not isolate the executor or provide filesystem confinement.
 """
 
 from enum import Enum
@@ -25,7 +25,7 @@ class ToolPermissionDeniedError(ToolGuardError):
 
 
 class PathTraversalError(ToolGuardError):
-    """Raised when a tool argument attempts to escape the designated sandbox filesystem root."""
+    """Raised when a recognized path argument is invalid or resolves outside the declared root."""
     pass
 
 
@@ -38,7 +38,7 @@ class ToolGuard:
     """
     Guards tool execution requests by validating:
     1. Tool Allowlist and Permission Scoping
-    2. Filesystem sandbox boundary confinement (Anti-Traversal)
+    2. Recognized path argument validation (not OS sandboxing)
     3. Human-in-the-Loop Two-Phase Commit for Destructive actions
     """
 
@@ -84,29 +84,34 @@ class ToolGuard:
                     f"Execution blocked pending explicit human sign-off."
                 )
 
-        # 3. Path Traversal & Sandbox Confinement
+        # 3. Recognized path argument checks
         if self.sandbox_root:
             self._validate_path_arguments(arguments)
 
-    def _validate_path_arguments(self, arguments: Dict[str, Any]) -> None:
-        """Inspects arguments for filepath keys and ensures they stay within sandbox_root."""
+    def _validate_path_arguments(self, arguments: Any) -> None:
+        """Inspect known path keys in dictionaries and lists, including nested values."""
         path_keys = {"path", "file_path", "filepath", "target_file", "dest", "destination", "output_path"}
 
-        for key, val in arguments.items():
-            if key.lower() in path_keys and isinstance(val, str):
-                target_path = Path(val)
-                # Resolve path relative to sandbox_root if relative
-                if not target_path.is_absolute():
-                    resolved = (self.sandbox_root / target_path).resolve()
-                else:
-                    resolved = target_path.resolve()
+        if isinstance(arguments, list):
+            for value in arguments:
+                self._validate_path_arguments(value)
+            return
 
+        if not isinstance(arguments, dict):
+            return
+
+        for key, value in arguments.items():
+            if isinstance(key, str) and key.lower() in path_keys:
+                if not isinstance(value, str) or not value or "\0" in value:
+                    raise PathTraversalError(f"Invalid path argument for '{key}': expected a non-empty string")
+                target_path = Path(value)
+                resolved = (self.sandbox_root / target_path).resolve() if not target_path.is_absolute() else target_path.resolve()
                 try:
                     resolved.relative_to(self.sandbox_root)
-                except ValueError:
+                except ValueError as exc:
                     raise PathTraversalError(
-                        f"Path traversal detected: Target path '{val}' resolves to '{resolved}', "
+                        f"Path traversal detected: Target path '{value}' resolves to '{resolved}', "
                         f"which escapes the designated sandbox root '{self.sandbox_root}'."
-                    )
-            elif isinstance(val, dict):
-                self._validate_path_arguments(val)
+                    ) from exc
+            elif isinstance(value, (dict, list)):
+                self._validate_path_arguments(value)

@@ -1,11 +1,13 @@
 # BartsAI Agent Production Starter: Deterministic Guardrails & CI Evaluation
 
-[![CI](https://img.shields.io/badge/CI-Passing-emerald)](ci/agent-eval-ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![CI template](https://img.shields.io/badge/CI-template-blue)](ci/agent-eval-ci.yml)
+[![Python target 3.10+](https://img.shields.io/badge/python-target%203.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Standards: BartsAI 50--Item Checklist](https://img.shields.io/badge/Standard-BartsAI%2050--Item%20Checklist-purple)](https://www.bartsaiconsulting.com/checklists/production-readiness/)
 
-A production-grade, reproducible evaluation and hard guardrails starter kit for autonomous AI agents with tool-calling capabilities.
+A local example of deterministic checks to adapt before using an AI agent with tools. Its tests exercise sample inputs, not your application's executor or production environment.
+
+`pyproject.toml` targets Python 3.10 and newer. The current local demo and full checks were run on Python 3.12 only; 3.10 and 3.11 have not yet been checked in a hosted matrix. Treat the version range as a compatibility target, not evidence of a passing CI matrix.
 
 ---
 
@@ -15,7 +17,7 @@ A production-grade, reproducible evaluation and hard guardrails starter kit for 
 
 Enterprise teams frequently suffer catastrophic agent failures when relying on system prompts (e.g. *"Please do not delete data or execute unsafe commands"*) or input-only text classifiers. When an agent enters multi-turn tool loops, it can suffer **Internal Safety Collapse (ISC)** — over-optimizing to fulfill a sub-goal by deleting tests, traversing directories, or entering runaway recursive calls.
 
-This starter kit enforces **deterministic hard controls in code** before tools execute, combined with **CI evaluation gates** (using DeepEval and pytest) to block unsafe pull requests before deployment.
+The example checks tool names, selected path arguments, schemas and budgets before calling a sample executor. Integrating it into a real application requires routing every tool call through the checks and testing the actual executor.
 
 ---
 
@@ -25,49 +27,58 @@ This starter kit enforces **deterministic hard controls in code** before tools e
 | :--- | :--- | :--- | :--- |
 | **1. Step & Resource Ceilings** | `CircuitBreaker` | Infinite recursion, runaway token burn, loop hallucination | Deterministic hard threshold & arg hashing |
 | **2. Least-Privilege Tool Scoping** | `ToolGuard` | Unauthorized tool execution, prompt injection hijacking | Strict allowlist & permission tiering |
-| **3. Sandbox Confinement** | `ToolGuard` | Host directory escape, `/etc/passwd` or `.env` leaks | Path resolution & sandbox root anchoring |
+| **3. Recognized Path Arguments** | `ToolGuard` | Traversal in supported path fields | Resolve known path keys against a declared root; not OS isolation |
 | **4. Structural Type Validation** | `SchemaValidator` | Wildcard database wipes, malformed parameter drift | JSON Schema & Pydantic strict typing |
 
 ---
 
-## 🚀 10-Second Quickstart
+## Quickstart
 
-### 1. Run the test suite immediately (Zero external setup)
+### 1. Run the dependency-free demonstration
 
 This repository includes a standalone test runner that works with standard Python:
 
 ```bash
-cd starters/agent-production-starter
-python3 run_tests.py
+git clone https://github.com/bartsaiconsulting/agent-production-starter.git
+cd agent-production-starter
+python3 --version
+python3 run_tests.py --demo
 ```
 
 Expected output:
 ```text
-============================================================
-  BartsAI Production Evaluation & Hard Guardrails Test Suite
-============================================================
-
-▶ Running: tests/test_circuit_breakers.py...
-  ✓ All circuit breaker tests passed!
-
-▶ Running: tests/test_schema_integrity.py...
-  ✓ All schema integrity tests passed!
-
-▶ Running: tests/test_tool_calling_trajectory.py...
-  ✓ All tool calling trajectory tests passed!
-
-============================================================
-  ✅ All test suites passed successfully! 100% Green.
-============================================================
+Demo: checking tool guards and fail-closed behavior with the Python standard library.
+Skipped: JSON Schema evaluation, Pydantic validation, DeepEval record construction, and full pytest suite.
+Ran 2 tests ... OK
+Demo passed; see runner output for executed checks.
 ```
 
-### 2. Run the End-to-End Interception Demo
+Strict `SchemaValidator.validate_json_schema()` calls require `jsonschema` even in demo mode. Missing dependencies cause an explicit error; they never switch to a weaker validator.
+
+### 2. Run the full local verification
+
+```bash
+python3 -m pip install -r requirements-core.txt
+python3 run_tests.py --full
+```
+
+Missing mandatory packages cause a nonzero exit with an install hint. The full run exercises sample schema, path and budget tests. DeepEval record construction is optional and reported as skipped when absent; install `requirements.txt` only if you need that integration. Neither mode calls a paid model API or scores a DeepEval metric. Pytest reports passed, failed and skipped tests; a skipped check is not a pass.
+
+### 3. Run the interception example
 
 ```bash
 PYTHONPATH=. python3 examples/guard_demo.py
 ```
 
-Watch how `BartsAIGuard` intercepts injection attempts, path traversal, and unapproved destructive actions in real time.
+This example shows allowlist, recognized path-argument and approval-token checks. It does not execute a customer's tool or prove OS sandboxing.
+
+`ToolGuard` checks `path`, `file_path`, `filepath`, `target_file`, `dest`, `destination` and `output_path` in nested dictionaries and lists. Relative paths resolve against `sandbox_root`. Your executor must use the same normalized target and enforce OS isolation, permissions and business authorization. Unknown fields, direct executor calls, shell/SQL behavior and symlink changes after validation remain outside this example's boundary.
+
+### Upgrading from the earlier demo
+
+The runner now requires an explicit `--demo` or `--full` mode. The demo is not a substitute for full schema tests: install `requirements-core.txt` and run `python3 run_tests.py --full` before relying on the sample validation checks. Direct JSON Schema calls without `jsonschema` now raise `SchemaValidationError` instead of accepting a partial check.
+
+Review any tool adapter that passes nested path arguments or lists: recognized path fields that resolve outside `sandbox_root`, or have unsupported value types, now fail before dispatch. Add a regression case for each path shape your application uses. Do not treat a passing Starter test as proof that your executor uses the checked target; verify that integration separately.
 
 ---
 
@@ -103,10 +114,10 @@ def safe_tool_executor(tool_name: str, arguments: dict, token: str = None):
     # Step A: Enforce step limits and detect infinite loops
     breaker.record_step(tool_name, arguments, step_tokens=400, step_cost_usd=0.005)
 
-    # Step B: Authorize tool & verify filesystem sandbox boundaries
+    # Step B: Authorize tool & inspect recognized path arguments
     guard.inspect_and_authorize(tool_name, arguments, approval_token=token)
 
-    # Step C: Physically execute tool only if all checks pass
+    # Step C: Your executor must use the validated target and enforce its own isolation
     return actual_tool_implementation(tool_name, arguments)
 ```
 
@@ -114,7 +125,7 @@ def safe_tool_executor(tool_name: str, arguments: dict, token: str = None):
 
 ## 🧪 CI/CD Pipeline Integration
 
-Copy [`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) directly into your repository's `.github/workflows/agent-eval.yml`:
+[`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) is a template, not evidence of a hosted CI run. It assumes this package, `requirements-core.txt` and `tests/` are present at repository root. Adapt those paths and permissions before adding it to your own `.github/workflows/` directory:
 
 ```yaml
 name: Agent Production Guardrails & Eval Gate
@@ -128,8 +139,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r requirements.txt
-      - run: python -m pytest tests/ -v
+      - run: pip install -r requirements-core.txt
+      - run: python run_tests.py --full
 ```
 
 ---

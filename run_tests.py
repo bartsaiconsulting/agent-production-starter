@@ -1,60 +1,46 @@
 #!/usr/bin/env python3
-"""
-BartsAI Agent Starter: Universal Test Runner.
-Executes all safety & evaluation test suites with zero external setup.
-"""
+"""Run dependency-free control checks or the full local Starter verification."""
 
-import sys
+import argparse
+import importlib.util
 import subprocess
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.resolve()
-
-TEST_FILES = [
-    "tests/test_circuit_breakers.py",
-    "tests/test_schema_integrity.py",
-    "tests/test_tool_calling_trajectory.py",
-]
+FULL_DEPENDENCIES = ("pytest", "jsonschema", "pydantic")
 
 
-def run_all_tests():
-    print("=" * 60)
-    print("  BartsAI Production Evaluation & Hard Guardrails Test Suite")
-    print("=" * 60)
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--demo", action="store_true", help="Run standard-library checks only")
+    mode.add_argument("--full", action="store_true", help="Require dependencies and run every test")
+    args = parser.parse_args()
 
-    total_failed = 0
-
-    for test_rel in TEST_FILES:
-        test_path = BASE_DIR / test_rel
-        print(f"\n▶ Running: {test_rel}...")
-        proc = subprocess.run(
-            [sys.executable, str(test_path)],
-            cwd=str(BASE_DIR),
-            env={"PYTHONPATH": str(BASE_DIR)},
-            capture_output=True,
-            text=True,
-        )
-
-        if proc.returncode == 0:
-            print(f"  ✓ {proc.stdout.strip()}")
-        else:
-            print(f"  ❌ FAILED (exit code {proc.returncode})")
-            if proc.stdout:
-                print(proc.stdout)
-            if proc.stderr:
-                print(proc.stderr)
-            total_failed += 1
-
-    print("\n" + "=" * 60)
-    if total_failed == 0:
-        print("  ✅ All test suites passed successfully! 100% Green.")
-        print("=" * 60)
-        return 0
+    if args.full:
+        missing = [name for name in FULL_DEPENDENCIES if importlib.util.find_spec(name) is None]
+        if missing:
+            print(f"Full verification unavailable: missing {', '.join(missing)}.", file=sys.stderr)
+            print("Install dependencies with `pip install -r requirements-core.txt`.", file=sys.stderr)
+            return 2
+        from pydantic import BaseModel
+        if not hasattr(BaseModel, "model_validate"):
+            print("Full verification requires Pydantic 2; install requirements-core.txt.", file=sys.stderr)
+            return 2
+        if importlib.util.find_spec("deepeval") is None:
+            print("Optional DeepEval record construction skipped: deepeval is not installed.", flush=True)
+        command = [sys.executable, "-m", "pytest", "tests", "-q", "-rs"]
     else:
-        print(f"  ❌ {total_failed} test suite(s) failed.")
-        print("=" * 60)
-        return 1
+        print("Demo: checking tool guards and fail-closed behavior with the Python standard library.", flush=True)
+        print("Skipped: JSON Schema evaluation, Pydantic validation, DeepEval record construction, and full pytest suite.", flush=True)
+        command = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_strict_boundaries.py", "-v"]
+
+    result = subprocess.run(command, cwd=BASE_DIR, check=False)
+    if result.returncode == 0:
+        print(f"{'Full verification' if args.full else 'Demo'} passed; see runner output for executed checks.")
+    return result.returncode
 
 
 if __name__ == "__main__":
-    sys.exit(run_all_tests())
+    sys.exit(main())

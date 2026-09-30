@@ -1,6 +1,5 @@
 """
-End-to-End Example: Securing an Agent Tool Execution Loop with BartsAI Guard.
-Demonstrates how hard deterministic boundaries intercept attacks before execution.
+Local example of checks before a stub tool executor.
 """
 
 from pathlib import Path
@@ -14,7 +13,7 @@ from bartsai_guard import (
     SchemaValidationError,
 )
 
-# 1. Initialize Runtime Sandbox & Tool Guard
+# 1. Declare a path root for recognized arguments; this is not OS isolation.
 sandbox_dir = Path("./sandbox_workspace").resolve()
 sandbox_dir.mkdir(exist_ok=True)
 
@@ -35,10 +34,10 @@ breaker = CircuitBreaker(max_steps=5, max_cost_usd=0.20)
 
 def execute_agent_tool(tool_name: str, arguments: dict, approval_token: str = None) -> str:
     """
-    Standard production tool execution wrapper.
+    Demonstration wrapper with a stub executor.
     Evaluates:
     1. Circuit breaker ceilings
-    2. Tool permission & sandbox boundaries
+    2. Tool permission & recognized path arguments
     """
     print(f"\n[Agent Proposed Tool Call]: {tool_name}({arguments})")
 
@@ -46,11 +45,11 @@ def execute_agent_tool(tool_name: str, arguments: dict, approval_token: str = No
         # Step A: Enforce step & cost limits
         breaker.record_step(tool_name, arguments, step_tokens=300, step_cost_usd=0.005)
 
-        # Step B: Authorize tool & sandbox confinement
+        # Step B: Authorize tool & inspect recognized path arguments
         guard.inspect_and_authorize(tool_name, arguments, approval_token=approval_token)
 
         # Step C: Mock execution
-        return f"SUCCESS: Executed {tool_name} with safe boundaries."
+        return f"DEMO: Stub accepted {tool_name}; no real tool was executed."
 
     except (CircuitBreakerTrippedError, ToolGuardError, SchemaValidationError) as e:
         return f"BLOCKED by BartsAI Guard: {e}"
@@ -67,7 +66,7 @@ if __name__ == "__main__":
     res2 = execute_agent_tool("execute_bash", {"command": "cat /etc/passwd"})
     print(f"Result: {res2}")
 
-    # Scenario 3: Attack - Path traversal escaping the sandbox
+    # Scenario 3: Path argument outside the declared root
     res3 = execute_agent_tool("write_local_report", {"path": "../../../etc/crontab", "content": "* * * * * root"})
     print(f"Result: {res3}")
 
