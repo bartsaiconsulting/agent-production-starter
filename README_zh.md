@@ -7,7 +7,7 @@
 
 面向具备工具调用能力的 AI Agent 的开源本地校验示例；真实执行器仍需独立授权和隔离。
 
-`pyproject.toml` 的目标兼容范围为 Python 3.10 及以上。[提交 `7315b97` 的托管 CI 矩阵](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36765713872) 已在 Python 3.10、3.11 和 3.12 通过；更新版本仍是兼容目标，不代表已经测试。CI 校验的是示例仓库，不是客户项目的执行器。
+`pyproject.toml` 的目标兼容范围为 Python 3.10 及以上。[已发布提交 `024a53b` 的托管 CI 矩阵](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36768742555) 已在 Python 3.10、3.11 和 3.12 通过；更新版本仍是兼容目标，不代表已经测试。CI 校验的是示例仓库，不是客户项目的执行器。
 
 ---
 

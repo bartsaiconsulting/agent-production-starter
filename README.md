@@ -7,7 +7,7 @@
 
 A local example of deterministic checks to adapt before using an AI agent with tools. Its tests exercise sample inputs, not your application's executor or production environment.
 
-`pyproject.toml` targets Python 3.10 and newer. The [hosted CI matrix for commit `7315b97`](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36765713872) passed on Python 3.10, 3.11 and 3.12. Newer versions remain a compatibility target, not a tested claim. CI checks this example repository, not your application's executor.
+`pyproject.toml` targets Python 3.10 and newer. The [hosted CI matrix for published commit `024a53b`](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36768742555) passed on Python 3.10, 3.11 and 3.12. Newer versions remain a compatibility target, not a tested claim. CI checks this example repository, not your application's executor.
 
 ---
 
