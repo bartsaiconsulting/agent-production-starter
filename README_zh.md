@@ -1,13 +1,13 @@
 # BartsAI Agent 工具调用校验示例 (Python Starter Kit)
 
-[![CI 模板](https://img.shields.io/badge/CI-template-blue)](ci/agent-eval-ci.yml)
+[![Starter guardrail tests](https://github.com/bartsaiconsulting/agent-production-starter/actions/workflows/guardrail-tests.yml/badge.svg?branch=main)](https://github.com/bartsaiconsulting/agent-production-starter/actions/workflows/guardrail-tests.yml)
 [![Python 目标 3.10+](https://img.shields.io/badge/python-target%203.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![准入基准: BartsAI 50条生产清单](https://img.shields.io/badge/基准-BartsAI%2050条生产清单-purple)](https://www.bartsaiconsulting.com/zh/checklists/production-readiness/)
 
 面向具备工具调用能力的 AI Agent 的开源本地校验示例；真实执行器仍需独立授权和隔离。
 
-`pyproject.toml` 的目标兼容范围为 Python 3.10 及以上。目前仅在 Python 3.12 本地运行了演示与完整测试；3.10/3.11 尚无托管矩阵验证。版本范围是兼容目标，不代表 CI 已通过。
+`pyproject.toml` 的目标兼容范围为 Python 3.10 及以上。[提交 `7315b97` 的托管 CI 矩阵](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36765713872) 已在 Python 3.10、3.11 和 3.12 通过；更新版本仍是兼容目标，不代表已经测试。CI 校验的是示例仓库，不是客户项目的执行器。
 
 ---
 
@@ -125,7 +125,7 @@ def safe_tool_executor(tool_name: str, arguments: dict, token: str = None):
 
 ## 🧪 CI/CD 自动化评测流水线
 
-[`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) 是模板，不代表托管 CI 已运行。它假定脚手架、`requirements-core.txt` 与 `tests/` 位于仓库根目录；移入自己的 `.github/workflows/` 前需调整路径与权限：
+本仓库已在自身分支与 PR 上运行 [Starter guardrail tests](.github/workflows/guardrail-tests.yml)。[`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) 仍是可复用模板，不代表客户仓库已启用 CI。它假定脚手架、`requirements-core.txt` 与 `tests/` 位于仓库根目录；移入自己的 `.github/workflows/` 前需调整路径与权限：
 
 ```yaml
 name: Agent Production Guardrails & Eval Gate

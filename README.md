@@ -1,13 +1,13 @@
 # BartsAI Agent Production Starter: Deterministic Guardrails & CI Evaluation
 
-[![CI template](https://img.shields.io/badge/CI-template-blue)](ci/agent-eval-ci.yml)
+[![Starter guardrail tests](https://github.com/bartsaiconsulting/agent-production-starter/actions/workflows/guardrail-tests.yml/badge.svg?branch=main)](https://github.com/bartsaiconsulting/agent-production-starter/actions/workflows/guardrail-tests.yml)
 [![Python target 3.10+](https://img.shields.io/badge/python-target%203.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Standards: BartsAI 50--Item Checklist](https://img.shields.io/badge/Standard-BartsAI%2050--Item%20Checklist-purple)](https://www.bartsaiconsulting.com/checklists/production-readiness/)
 
 A local example of deterministic checks to adapt before using an AI agent with tools. Its tests exercise sample inputs, not your application's executor or production environment.
 
-`pyproject.toml` targets Python 3.10 and newer. The current local demo and full checks were run on Python 3.12 only; 3.10 and 3.11 have not yet been checked in a hosted matrix. Treat the version range as a compatibility target, not evidence of a passing CI matrix.
+`pyproject.toml` targets Python 3.10 and newer. The [hosted CI matrix for commit `7315b97`](https://github.com/bartsaiconsulting/agent-production-starter/actions/runs/36765713872) passed on Python 3.10, 3.11 and 3.12. Newer versions remain a compatibility target, not a tested claim. CI checks this example repository, not your application's executor.
 
 ---
 
@@ -125,7 +125,7 @@ def safe_tool_executor(tool_name: str, arguments: dict, token: str = None):
 
 ## 🧪 CI/CD Pipeline Integration
 
-[`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) is a template, not evidence of a hosted CI run. It assumes this package, `requirements-core.txt` and `tests/` are present at repository root. Adapt those paths and permissions before adding it to your own `.github/workflows/` directory:
+This repository runs [Starter guardrail tests](.github/workflows/guardrail-tests.yml) on its own branches and pull requests. [`ci/agent-eval-ci.yml`](ci/agent-eval-ci.yml) remains a copyable template, not evidence that your repository runs CI. It assumes this package, `requirements-core.txt` and `tests/` are present at repository root. Adapt those paths and permissions before adding it to your own `.github/workflows/` directory:
 
 ```yaml
 name: Agent Production Guardrails & Eval Gate
