@@ -2,7 +2,7 @@ name: Starter guardrail tests
 
 on:
   push:
-    branches: [main, "fix/**", "feature/**"]
+    branches: [main, "fix/**", "feature/**", "release/**"]
     tags: ["v*"]
   pull_request:
     branches: [main]
