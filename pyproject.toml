@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bartsai-agent-starter"
-version = "0.1.0"
+version = "0.2.0"
 description = "BartsAI Production Evaluation & Hard Guardrails Starter Kit for AI Agents"
 readme = "README.md"
 authors = [{ name = "BartsAI Engineering", email = "engineering@bartsaiconsulting.com" }]

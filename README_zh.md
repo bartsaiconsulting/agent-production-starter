@@ -41,6 +41,7 @@
 ```bash
 git clone https://github.com/bartsaiconsulting/agent-production-starter.git
 cd agent-production-starter
+git checkout v0.2.0
 python3 --version
 python3 run_tests.py --demo
 ```
@@ -54,6 +55,8 @@ Demo passed; see runner output for executed checks.
 ```
 
 演示模式不运行完整 Schema 校验；直接调用 `SchemaValidator.validate_json_schema()` 时若缺少 `jsonschema`，会明确报错，不会自动降级。
+
+迁移说明和版本支持边界见 [CHANGELOG.md](CHANGELOG.md)。
 
 ### 2. 运行完整本地验证
 

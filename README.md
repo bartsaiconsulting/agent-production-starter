@@ -41,6 +41,7 @@ This repository includes a standalone test runner that works with standard Pytho
 ```bash
 git clone https://github.com/bartsaiconsulting/agent-production-starter.git
 cd agent-production-starter
+git checkout v0.2.0
 python3 --version
 python3 run_tests.py --demo
 ```
@@ -54,6 +55,8 @@ Demo passed; see runner output for executed checks.
 ```
 
 Strict `SchemaValidator.validate_json_schema()` calls require `jsonschema` even in demo mode. Missing dependencies cause an explicit error; they never switch to a weaker validator.
+
+See [CHANGELOG.md](CHANGELOG.md) for migration notes and the supported release boundary.
 
 ### 2. Run the full local verification
 
